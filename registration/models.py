@@ -7,7 +7,7 @@ from django.conf import settings
 from django.db import models
 from django.db import transaction
 from django.template.loader import render_to_string
-from django.utils.translation import ugettext_lazy as _
+from django.utils.translation import gettext_lazy as _
 
 from registration.compat import AUTH_USER_MODEL, get_user_model
 
@@ -100,7 +100,7 @@ class RegistrationManager(models.Manager):
         """
         salt = hashlib.sha1(str(random.random())).hexdigest()[:5]
         username = user.username
-        if isinstance(username, unicode):
+        if isinstance(username, str):
             username = username.encode('utf-8')
         activation_key = hashlib.sha1(salt+username).hexdigest()
         return self.create(user=user,
@@ -172,9 +172,9 @@ class RegistrationProfile(models.Model):
     account registration and activation.
     
     """
-    ACTIVATED = u"ALREADY_ACTIVATED"
+    ACTIVATED = "ALREADY_ACTIVATED"
     
-    user = models.OneToOneField(AUTH_USER_MODEL, verbose_name=_('user'))
+    user = models.OneToOneField(AUTH_USER_MODEL, verbose_name=_('user'), on_delete=models.CASCADE)
     activation_key = models.CharField(_('activation key'), max_length=40)
     
     objects = RegistrationManager()
@@ -184,7 +184,7 @@ class RegistrationProfile(models.Model):
         verbose_name_plural = _('registration profiles')
     
     def __unicode__(self):
-        return u"Registration information for %s" % self.user
+        return "Registration information for %s" % self.user
     
     def activation_key_expired(self):
         """

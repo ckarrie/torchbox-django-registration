@@ -1,0 +1,6 @@
+
+.idea/
+
+django_registration.egg-info/
+
+registration/__pycache__/
