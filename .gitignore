@@ -1,8 +1,9 @@
 
+*.py[cod]
 .idea/
-
-django_registration.egg-info/
-
+*.egg-info/
+*.egg
+__pycache__/
 registration/__pycache__/
 
 registration/migrations/__pycache__/

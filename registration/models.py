@@ -16,7 +16,6 @@ try:
 except ImportError:
     datetime_now = datetime.datetime.now
 
-
 SHA1_RE = re.compile('^[a-f0-9]{40}$')
 
 
@@ -29,6 +28,7 @@ class RegistrationManager(models.Manager):
     keys), and for cleaning out expired inactive accounts.
     
     """
+
     def activate_user(self, activation_key):
         """
         Validate an activation key and activate the corresponding
@@ -64,9 +64,9 @@ class RegistrationManager(models.Manager):
                 profile.save()
                 return user
         return False
-    
+
     def create_inactive_user(self, username, email, password,
-                             site, send_email=True):
+        site, send_email=True):
         """
         Create a new, inactive ``User``, generate a
         ``RegistrationProfile`` and email its activation key to the
@@ -86,6 +86,7 @@ class RegistrationManager(models.Manager):
             registration_profile.send_activation_email(site)
 
         return new_user
+
     create_inactive_user = transaction.atomic(create_inactive_user)
 
     def create_profile(self, user):
@@ -98,14 +99,13 @@ class RegistrationManager(models.Manager):
         username and a random salt.
         
         """
-        salt = hashlib.sha1(str(random.random())).hexdigest()[:5]
+        salt = hashlib.sha1(str(random.random()).encode()).hexdigest()[:5]
         username = user.username
-        if isinstance(username, str):
-            username = username.encode('utf-8')
-        activation_key = hashlib.sha1(salt+username).hexdigest()
+        salt_and_username = salt + username
+        activation_key = hashlib.sha1(salt_and_username.encode()).hexdigest()
         return self.create(user=user,
                            activation_key=activation_key)
-        
+
     def delete_expired_users(self):
         """
         Remove expired instances of ``RegistrationProfile`` and their
@@ -156,6 +156,7 @@ class RegistrationManager(models.Manager):
             except get_user_model().DoesNotExist:
                 profile.delete()
 
+
 class RegistrationProfile(models.Model):
     """
     A simple profile which stores an activation key for use during
@@ -173,19 +174,19 @@ class RegistrationProfile(models.Model):
     
     """
     ACTIVATED = "ALREADY_ACTIVATED"
-    
+
     user = models.OneToOneField(AUTH_USER_MODEL, verbose_name=_('user'), on_delete=models.CASCADE)
     activation_key = models.CharField(_('activation key'), max_length=40)
-    
+
     objects = RegistrationManager()
-    
+
     class Meta:
         verbose_name = _('registration profile')
         verbose_name_plural = _('registration profiles')
-    
+
     def __unicode__(self):
         return "Registration information for %s" % self.user
-    
+
     def activation_key_expired(self):
         """
         Determine whether this ``RegistrationProfile``'s activation
@@ -211,6 +212,7 @@ class RegistrationProfile(models.Model):
         expiration_date = datetime.timedelta(days=settings.ACCOUNT_ACTIVATION_DAYS)
         return self.activation_key == self.ACTIVATED or \
                (self.user.date_joined + expiration_date <= datetime_now())
+
     activation_key_expired.boolean = True
 
     def send_activation_email(self, site):
@@ -258,9 +260,8 @@ class RegistrationProfile(models.Model):
                                    ctx_dict)
         # Email subject *must not* contain newlines
         subject = ''.join(subject.splitlines())
-        
+
         message = render_to_string('registration/activation_email.txt',
                                    ctx_dict)
-        
+
         self.user.email_user(subject, message, settings.DEFAULT_FROM_EMAIL)
-    
